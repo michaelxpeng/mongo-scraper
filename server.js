@@ -13,7 +13,7 @@ var PORT = 8080;
 
 // Database configuration
 var databaseUrl = "homework";
-var collections = ["homeworkData"];
+var collections = ["Article"];
 
 // Hook mongojs configuration to the db variable
 var db = mongojs(databaseUrl, collections);
@@ -63,7 +63,7 @@ app.get("/scrape", function (req, res) {
       var author = $(element).parents(".article-item").attr("data-author");
 
       if (title && link && subhed && date && author) {
-        db.homeworkData.insert({
+        db.Article.insert({
           title: title,
           subhed: subhed,
           link: "https://www.milb.com" + link,
@@ -85,9 +85,10 @@ app.get("/scrape", function (req, res) {
   });
 });
 
-// Retrieve data from the db
+// Route for getting all Articles from the db
 app.get("/articles", function (req, res) {
-  db.homeworkData.find({}, function (error, found) {
+  // Grab every document in the Articles collection
+  db.Article.find({}, function (error, found) {
     if (error) {
       console.log(error);
     }
@@ -97,8 +98,36 @@ app.get("/articles", function (req, res) {
   });
 });
 
+// Route for grabbing a specific Article by id, populate it with its note
+app.get("/articles/:id", function (req, res) {
+  db.Article.findOne({ _id: mongojs.ObjectId(req.params.id) })
+    // ..and populate all of the notes associated with it
+    .populate("note")
+    .then(function (dbArticle) {
+      res.json(dbArticle);
+    })
+    .catch(function (err) {
+      res.json(err);
+    });
+});
+
+// Route for saving/updating an Article's associated Note
+app.post("/articles/:id", function (req, res) {
+  // Create a new note and pass the req.body to the entry
+  db.Note.insert(req.body)
+    .then(function (dbNote) {
+      return db.Article.findOneAndUpdate({ _id: mongojs.ObjectId(req.params.id) }, { $push: {note: dbNote._id } }, { new: true });
+    })
+    .then(function (dbArticle) {
+      res.json(dbArticle);
+    })
+    .catch(function (err) {
+      res.json(err);
+    });
+});
+
 app.get("/clear", function (req, res) {
-  db.homeworkData.remove({}, function (error, found) {
+  db.Article.remove({}, function (error, found) {
     if (error) {
       console.log(error);
     }
@@ -106,41 +135,32 @@ app.get("/clear", function (req, res) {
       res.json(found);
     }
   });
-  res.redirect('/');
 });
 
 // Mark an article as saved
 app.get("/save/:id", function (req, res) {
 
-  db.homeworkData.update({ "_id": mongojs.ObjectID(req.params.id) }, { $set: { saved: true } }, function (error, found) {
-    if (error) {
-      console.log(error);
+  db.Article.update(
+    {
+      _id: mongojs.ObjectId(req.params.id)
+    },
+    {
+      $set: { saved: true }
+    }, function (error, found) {
+      if (error) {
+        console.log(error);
+      }
+      else {
+        console.log(found);
+        res.json(found);
+      }
     }
-    else {
-      console.log(found);
-      res.json(found);
-    }
-  }
-  );
-});
-
-app.get("/article/:id", function (req, res) {
-  
-  db.homeworkData.find({_id: ObjectId(req.params.id) }, function (error, found) {
-    if (error) {
-      console.log(error);
-    }
-    else {
-      console.log(found);
-      res.json(found);
-    }
-  }
   );
 });
 
 // Find all articles marked as saved
 app.get("/saved", function (req, res) {
-  db.homeworkData.find({ saved: true }, function (error, found) {
+  db.Article.find({ saved: true }, function (error, found) {
     if (error) {
       console.log(error);
     }
@@ -151,77 +171,57 @@ app.get("/saved", function (req, res) {
 });
 
 // Find all articles marked as unsaved
-// app.get("/unsaved", function(req, res) {
-//   db.homeworkData.find({ saved: false }, function(error, found) {
-//     if (error) {
-//       console.log(error);
-//     }
-//     else {
-//       res.json(found);
-//     }
-//   });
-// });
+app.get("/unsaved", function (req, res) {
+  db.Article.find({ saved: false }, function (error, found) {
+    if (error) {
+      console.log(error);
+    }
+    else {
+      res.json(found);
+    }
+  });
+});
 
 // Route for retrieving all Notes from the db
 app.get("/notes", function (req, res) {
-  // Find all Notes
-  db.Note.find({})
-    .then(function (dbNote) {
-      res.json(dbNote);
-    })
-    .catch(function (err) {
-      res.json(err);
-    });
+  db.Note.find({}, function (error, found) {
+    if (error) {
+      console.log(error);
+    }
+    else {
+      res.json(found);
+    }
+  });
 });
 
-// Route for saving a new Note to the db and associating it with an Article
-app.post("/submit", function (req, res) {
-  // Create a new Note in the db
-  db.Note.create(req.body)
-    .then(function (dbNote) {
-      // If a Note was created successfully, find one Article (there's only one) and push the new Note's _id to the Article's `notes` array
-      // { new: true } tells the query that we want it to return the updated User -- it returns the original by default
-      // Since our mongoose query returns a promise, we can chain another `.then` which receives the result of the query
-      return db.Article.findOneAndUpdate({}, { $push: { notes: dbNote._id } }, { new: true });
-    })
-    .then(function (dbArticle) {
-      // If the Article was updated successfully, send it back to the client
-      res.json(dbArticle);
-    })
-    .catch(function (err) {
-      // If an error occurs, send it back to the client
-      res.json(err);
-    });
+// Route for clearing all Notes from the db
+app.get("/clearnotes", function (req, res) {
+  db.Note.remove({}, function (error, found) {
+    if (error) {
+      console.log(error);
+    }
+    else {
+      res.json(found);
+    }
+  });
 });
 
-// // Route to get all Articles and populate them with their notes
-// app.get("/populatedarticle", function(req, res) {
-//   // Find all users
-//   db.Article.find({})
-//     // Specify that we want to populate the retrieved users with any associated notes
-//     .populate("note")
-//     .then(function(dbArticle) {
-//       // If able to successfully find and associate all Articles and Notes, send them back to the client
+// // Route for saving a new Note to the db and associating it with an Article
+// app.post("/submit", function (req, res) {
+//   // Create a new Note in the db
+//   db.Note.create(req.body)
+//     .then(function (dbNote) {
+//       // If a Note was created successfully, find one Article (there's only one) and push the new Note's _id to the Article's `notes` array
+//       // { new: true } tells the query that we want it to return the updated User -- it returns the original by default
+//       // Since our mongoose query returns a promise, we can chain another `.then` which receives the result of the query
+//       return db.Article.findOneAndUpdate({}, { $push: { note: dbNote._id } }, { new: true });
+//     })
+//     .then(function (dbArticle) {
+//       // If the Article was updated successfully, send it back to the client
 //       res.json(dbArticle);
 //     })
-//     .catch(function(err) {
+//     .catch(function (err) {
 //       // If an error occurs, send it back to the client
-//       res.json(err);
-//     });
-// });
-
-// // Route for grabbing a specific Article by id, populate it with it's note
-// app.get("/articles/:id", function(req, res) {
-//   // Using the id passed in the id parameter, prepare a query that finds the matching one in our db...
-//   db.Article.findOne({ _id: req.params.id })
-//     // ..and populate all of the notes associated with it
-//     .populate("note")
-//     .then(function(dbArticle) {
-//       // If we were able to successfully find an Article with the given id, send it back to the client
-//       res.json(dbArticle);
-//     })
-//     .catch(function(err) {
-//       // If an error occurred, send it to the client
 //       res.json(err);
 //     });
 // });

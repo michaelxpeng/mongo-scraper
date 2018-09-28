@@ -1,87 +1,56 @@
-// Grab the articles as a json
-$.getJSON("/articles", function (data) {
-  // For each one
+$.getJSON("/unsaved", function (data) {
   for (var i = 0; i < data.length; i++) {
-    // Display the apropos information on the page
-    $(".articles").append("<h4 class='header'>" + data[i].title +
-      "<a href=" + "'/saved'" + "class=" + "'waves-effect btn' data-id='" + data[i]._id + "'" +
-      "id='save'>SAVE ARTICLE</a>" +
+    $("#articles").append("<div class='single-article'><h4 class='header'>" + data[i].title +
+      "<button class='waves-effect btn right' id='save' data-id='" + data[i]._id + "'>SAVE ARTICLE</button>" +
+      "<button class='waves-effect btn right modal-trigger' id='add-note' data-id='" + data[i]._id + "' data-target='modal1'>ADD NOTE</button>" +
       "</h4>" +
-      "<h6>By: " + data[i].author + "</h6>" +
       "<h6>" + data[i].subhed + "</h6>" +
-      "<div class='card-action'" +
       "<a href=" + "'" + data[i].link + "'>" + data[i].link + "</a>" +
-      "</div>");
+      "</div>" +
+      "<div id='modal1' class='modal'>" +
+      "<div class='modal-content'>" +
+      "<h5>Note Title</h5>" +
+      "<input id='titleinput' name='title'>" +
+      "<textarea id='bodyinput' name='body'></textarea>" +
+      "</div>" +
+      "<div class='modal-footer'>" +
+      "<a class='modal-close waves-effect btn' id='save-note' data-id='" + data[i]._id + "'>SAVE NOTE</a>" +
+      "</div>" +
+      "</div>"
+    );
   }
 });
 
-// function getUnread() {
-//   $("#unread").empty();
-//   $.getJSON("/unread", function (data) {
-//     for (var i = 0; i < data.length; i++) {
-//       $("#unread").prepend("<tr><td>" + data[i].title + "</td><td>" + data[i].author +
-//         "</td><td><button class='markread' data-id='" + data[i]._id + "'>Mark Read</button></td></tr>");
-//     }
-//     $("#unread").prepend("<tr><th>Title</th><th>Author</th><th>Read/Unread</th></tr>");
-//   });
-// }
+$(document).on("click", "#save", function () {
 
+  $(this).parents(".single-article").remove();
 
-// Click event to mark a book as read
-$("#save").on("click", function () {
   var thisId = $(this).attr("data-id");
   $.ajax({
     type: "GET",
     url: "/save/" + thisId
   });
-  // $(this).parents(".articles").remove();
-  getSaved();
 });
 
-// // Click event to mark a book as not read
-// $(document).on("click", ".markunsaved", function() {
-//   var thisId = $(this).attr("data-id");
-//   $.ajax({
-//     type: "GET",
-//     url: "/markunsaved/" + thisId
-//   });
-//   $(this).parents(".articles").remove();
-//   getUnsaved();
-// });
+$(document).ready(function () {
+  $('.modal').modal();
+});
 
+$(document).on("click", "#save-note", function () {
+  var thisId = $(this).attr("data-id");
 
-// Functions
-
-// Load unread books and render them to the screen
-// function getUnsaved() {
-//   $("#unread").empty();
-//   $.getJSON("/unread", function(data) {
-//     for (var i = 0; i < data.length; i++) {
-//       $("#unread").prepend("<tr><td>" + data[i].title + "</td><td>" + data[i].author +
-//         "</td><td><button class='markread' data-id='" + data[i]._id + "'>Mark Read</button></td></tr>");
-//     }
-//     $("#unread").prepend("<tr><th>Title</th><th>Author</th><th>Read/Unread</th></tr>");
-//   });
-// }
-
-// Load read books and render them to the screen
-function getSaved() {
-  // $("#read").empty();
-  $.getJSON("/saved", function (data) {
-    for (var i = 0; i < data.length; i++) {
-      $(".articles").prepend("<h4 class='header'>" + data[i].title +
-        "<a href=" + "'/saved'" + "class=" + "'waves-effect btn' data-id='" + data[i]._id + "'" +
-        "id='save'>SAVE ARTICLE</a>" +
-        "</h4>" +
-        "<h6>By: " + data[i].author + "</h6>" +
-        "<h6>" + data[i].subhed + "</h6>" +
-        "<div class='card-action'" +
-        "<a href=" + "'" + data[i].link + "'>" + data[i].link + "</a>" +
-        "</div>");
+  $.ajax({
+    method: "POST",
+    url: "/articles/" + thisId,
+    data: {
+      title: $("#titleinput").val().trim(),
+      body: $("#bodyinput").val().trim()
     }
-  });
-}
+  })
+    .then(function (data) {
+      console.log(data);
+    });
 
-// Calling our functions
-// getUnsaved();
-getSaved();
+  $("#titleinput").val("");
+  $("#bodyinput").val("");
+});

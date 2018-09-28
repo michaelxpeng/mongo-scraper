@@ -5,10 +5,6 @@
   background-color: #c62828 !important;
 }
 
-.card-image {
-  background-size: cover;
-}
-
 .row {
   width: 100%;
 }
@@ -20,15 +16,15 @@
   text-align: center;
 }
 
-h1 {
+h1, h3 {
   /* font-family: 'Bitter', serif; */
   font-family: "Cormorant SC";
-  font-weight: 800;
+  font-weight: 5000;
   color: white;
 }
 
 .logo {
-  margin-top: -75px;
+  margin-top: -175px;
 }
 
 .header {
@@ -40,13 +36,23 @@ h4 {
   color: white;
 }
 
-h5 {
-  font-family: "Cormorant SC";
-  font-weight: 400;
-  color: white;
+h6 {
+  padding: 10px;
+}
+
+a {
+  padding: 10px;
 }
 
 #save {
   background-color: #4caf50 !important;
-  float: right;
+}
+
+#add-note {
+  margin-right: 25px;
+}
+
+.btn-flat {
+  background-color: #c62828 !important;
+  color: white;
 }
