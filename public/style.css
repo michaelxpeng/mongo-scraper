@@ -1,0 +1,52 @@
+.nav-wrapper {
+  background-color: #003069;
+}
+.btn {
+  background-color: #c62828 !important;
+}
+
+.card-image {
+  background-size: cover;
+}
+
+.row {
+  width: 100%;
+}
+
+.caption {
+  position: absolute;
+  top: 30%;
+  width: 100%;
+  text-align: center;
+}
+
+h1 {
+  /* font-family: 'Bitter', serif; */
+  font-family: "Cormorant SC";
+  font-weight: 800;
+  color: white;
+}
+
+.logo {
+  margin-top: -75px;
+}
+
+.header {
+  background-color: #00b0ff;
+  padding: 10px;
+}
+
+h4 {
+  color: white;
+}
+
+h5 {
+  font-family: "Cormorant SC";
+  font-weight: 400;
+  color: white;
+}
+
+#save {
+  background-color: #4caf50 !important;
+  float: right;
+}
